@@ -2,13 +2,15 @@
 
 This document is the working blueprint for building `oasgo` into a command line tool that generates deterministic OpenAPI 3 YAML from Go source code.
 
+The initial target is a practical OpenAPI 3.0.3 subset. Full OpenAPI Specification coverage is not a version 1 goal.
+
 ## Product Goal
 
 `oasgo` should let a Go project keep its HTTP API contract close to the source code by scanning handlers, comments, request/response types, and struct tags, then emitting a reproducible OpenAPI 3 document.
 
 Primary outcomes:
 
-- Generate OpenAPI 3.0.3 YAML.
+- Generate OpenAPI 3.0.3 YAML for the supported feature subset.
 - Work as a command line tool first.
 - Parse real Go syntax using the Go standard library.
 - Keep output deterministic enough for reviewable diffs.
@@ -19,6 +21,7 @@ Non-goals for the first version:
 - Runtime server instrumentation.
 - Framework-specific reflection at process startup.
 - Full OpenAPI feature coverage.
+- OpenAPI 3.1.x support.
 - Network-based validation or hosted documentation.
 
 ## Architecture
@@ -116,7 +119,7 @@ Validation tag support should come after basic schema generation. When added, st
 
 ## OpenAPI Scope
 
-Version 1 should support:
+Version 1 should support a valid OpenAPI 3.0.3 subset:
 
 - `openapi`
 - `info`
@@ -134,8 +137,21 @@ Version 1 should support:
 - Array schemas from slices and arrays.
 - Pointer unwrapping with nullable handling decided explicitly.
 
+Version 1 compliance requirements:
+
+- The root document must include `openapi`, `info`, and `paths`.
+- Every operation must include at least one response.
+- Every response must include `description`.
+- Every path parameter in a route must have a matching required parameter.
+- Every path parameter declaration must appear in the route.
+- Request and response body content must render as valid OpenAPI `content`.
+- Referenced schemas must exist in `components.schemas`.
+- Renderer output must be deterministic.
+- Fixture tests should include validator coverage before the project claims supported-subset compliance.
+
 Defer until after the first stable generator:
 
+- OpenAPI 3.1.x.
 - Security schemes.
 - Multiple content types.
 - Deep object query parameters.

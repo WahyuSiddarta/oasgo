@@ -10,16 +10,24 @@ import (
 	"github.com/wahyusiddarta/oasgo/internal/render"
 )
 
+var version = "dev"
+
 func main() {
 	dir := flag.String("dir", ".", "Go source directory to scan")
 	title := flag.String("title", "API", "OpenAPI info.title")
-	version := flag.String("version", "0.0.0", "OpenAPI info.version")
+	apiVersion := flag.String("version", "0.0.0", "OpenAPI info.version")
+	versionInfo := flag.Bool("version-info", false, "Print oasgo version and exit")
 	flag.Parse()
+
+	if *versionInfo {
+		fmt.Println(version)
+		return
+	}
 
 	doc, err := generate.Generate(context.Background(), generate.Config{
 		Dir:     *dir,
 		Title:   *title,
-		Version: *version,
+		Version: *apiVersion,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

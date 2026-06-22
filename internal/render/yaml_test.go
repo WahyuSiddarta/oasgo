@@ -44,3 +44,63 @@ func TestRenderYAMLIsDeterministic(t *testing.T) {
 		}
 	}
 }
+
+func TestRenderYAMLIncludesSupportedOperationObjects(t *testing.T) {
+	doc := openapi.NewDocument("Example API", "1.0.0")
+	doc.Components.Schemas["CreateUserRequest"] = &openapi.Schema{
+		Type: "object",
+		Properties: map[string]*openapi.Schema{
+			"email": {Type: "string", Format: "email"},
+			"name":  {Type: "string"},
+		},
+		Required: []string{"name", "email"},
+	}
+	doc.Components.Schemas["UserResponse"] = &openapi.Schema{
+		Type: "object",
+		Properties: map[string]*openapi.Schema{
+			"id": {Type: "string"},
+		},
+		Required: []string{"id"},
+	}
+	doc.Paths["/users/{id}"] = &openapi.PathItem{Operations: map[string]*openapi.Operation{
+		"post": {
+			OperationID: "createUser",
+			Summary:     "Create user",
+			Tags:        []string{"users"},
+			Parameters: []openapi.Parameter{
+				{Name: "id", In: "path", Required: true, Schema: &openapi.Schema{Type: "string"}},
+			},
+			RequestBody: &openapi.RequestBody{
+				Required: true,
+				Content: map[string]*openapi.MediaType{
+					"application/json": {Schema: &openapi.Schema{Ref: "#/components/schemas/CreateUserRequest"}},
+				},
+			},
+			Responses: map[string]*openapi.Response{
+				"201": {
+					Description: "User created.",
+					Content: map[string]*openapi.MediaType{
+						"application/json": {Schema: &openapi.Schema{Ref: "#/components/schemas/UserResponse"}},
+					},
+				},
+			},
+		},
+	}}
+
+	got, err := RenderYAML(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, want := range [][]byte{
+		[]byte("parameters:\n"),
+		[]byte("requestBody:\n"),
+		[]byte("content:\n"),
+		[]byte("$ref: \"#/components/schemas/CreateUserRequest\"\n"),
+		[]byte("components:\n"),
+	} {
+		if !bytes.Contains(got, want) {
+			t.Fatalf("rendered YAML missing %q:\n%s", want, got)
+		}
+	}
+}

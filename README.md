@@ -2,10 +2,12 @@
 
 `oasgo` is a Go project for generating OpenAPI 3 YAML from Go source code.
 
+The initial target is a practical subset of OpenAPI 3.0.3. Full OpenAPI Specification coverage is not implemented yet.
+
 ## Goals
 
 - Parse Go handlers, comments, types, and struct tags.
-- Generate a valid OpenAPI 3 document.
+- Generate valid OpenAPI 3.0.3 YAML for the supported feature subset.
 - Emit deterministic YAML output.
 - Work as a command line tool.
 - Keep the generated API contract close to the Go code that implements it.
@@ -19,13 +21,62 @@
 - OpenAPI 3 components, paths, operations, parameters, request bodies, and responses.
 - YAML output suitable for documentation portals, client generation, and contract review.
 
+## OpenAPI Compliance Target
+
+`oasgo` currently targets OpenAPI 3.0.3, not the full latest OpenAPI Specification. The first implementation should generate valid output for a focused subset:
+
+- Root document fields: `openapi`, `info`, `paths`, and `components.schemas`.
+- Path items and operations from `oasgo:operation` comments.
+- Operation fields: `operationId`, `summary`, `description`, `tags`, `parameters`, `requestBody`, and `responses`.
+- JSON request/response bodies using `application/json`.
+- Component schemas generated from Go structs.
+- Basic scalar, object, array, map, and referenced schemas.
+
+Out of scope for the first version:
+
+- Full OpenAPI 3.1.x support.
+- Security schemes.
+- Multiple content types per operation.
+- Callbacks, links, webhooks, and advanced composition.
+- Complete JSON Schema compatibility.
+- Framework-specific route inference.
+
+Generated output should eventually be validated against an OpenAPI validator in tests before claiming compliance with the supported subset.
+
 ## Getting Started
 
-Run the command from this repository with `go run`:
+Install the CLI with `go install`:
+
+```sh
+go install github.com/wahyusiddarta/oasgo/cmd/oasgo@latest
+```
+
+Then run:
+
+```sh
+oasgo -dir ./examples/basic -title "Example API" -version "1.0.0"
+```
+
+During local development, run the command from this repository with `go run`:
 
 ```sh
 go run ./cmd/oasgo -dir ./examples/basic -title "Example API" -version "1.0.0"
 ```
+
+To build a local binary:
+
+```sh
+make build
+./bin/oasgo -dir ./examples/basic -title "Example API" -version "1.0.0"
+```
+
+To build release binaries for macOS, Linux, and Windows:
+
+```sh
+make release VERSION=v0.1.0
+```
+
+Release binaries are written to `dist/`.
 
 The command accepts:
 

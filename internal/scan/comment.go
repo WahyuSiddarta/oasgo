@@ -14,7 +14,7 @@ func CommentLines(group *ast.CommentGroup) []string {
 	lines := make([]string, 0, len(group.List))
 	for _, comment := range group.List {
 		text := strings.TrimPrefix(comment.Text, "//")
-		text = strings.TrimSpace(text)
+		text = strings.TrimPrefix(text, " ")
 		lines = append(lines, text)
 	}
 

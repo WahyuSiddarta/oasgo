@@ -12,13 +12,20 @@ The initial target is a practical subset of OpenAPI 3.0.3. Full OpenAPI Specific
 - Work as a command line tool.
 - Keep the generated API contract close to the Go code that implements it.
 
+## Current Capabilities
+
+- Recursive package and file scanning for Go projects.
+- Route and operation extraction from declarative `oasgo:operation` comments.
+- OpenAPI 3 paths, operations, parameters, request bodies, responses, and component schema references from parsed comments.
+- Supported-subset OpenAPI 3.0.3 validation before YAML rendering.
+- Deterministic YAML rendering for the current OpenAPI model.
+- Local and release binary build commands.
+
 ## Planned Capabilities
 
-- Package and file scanning for Go projects.
-- Route and operation extraction from declarative `oasgo:operation` comments.
 - Request and response schema generation from Go structs.
 - Struct tag support for JSON field names and validation-related metadata.
-- OpenAPI 3 components, paths, operations, parameters, request bodies, and responses.
+- Replacing placeholder component schemas with real schemas parsed from Go types.
 - YAML output suitable for documentation portals, client generation, and contract review.
 
 ## OpenAPI Compliance Target
@@ -41,7 +48,7 @@ Out of scope for the first version:
 - Complete JSON Schema compatibility.
 - Framework-specific route inference.
 
-Generated output should eventually be validated against an OpenAPI validator in tests before claiming compliance with the supported subset.
+Generated output is validated against the current in-project OpenAPI 3.0.3 subset validator before YAML is rendered. External OpenAPI validator coverage should be added before claiming broader compliance.
 
 ## Getting Started
 
@@ -80,7 +87,7 @@ Release binaries are written to `dist/`.
 
 The command accepts:
 
-- `-dir`: Go source directory to scan. Defaults to the current directory.
+- `-dir`: Go source directory tree to scan recursively. Defaults to the current directory.
 - `-title`: OpenAPI `info.title`. Defaults to `API`.
 - `-version`: OpenAPI `info.version`. Defaults to `0.0.0`.
 
@@ -90,11 +97,13 @@ Example output is written to stdout:
 go run ./cmd/oasgo -dir ./examples/basic -title "Example API" -version "1.0.0" > openapi.yaml
 ```
 
-Current status: the command and package layout are in place, but operation parsing and schema generation are still being implemented. At this stage, the command emits the initial OpenAPI document shape.
+Current status: the command layout, recursive Go package scanning, `oasgo:operation` parsing, deterministic YAML rendering, and supported-subset OpenAPI validation are in place. Go struct schema generation is still being implemented.
 
 ## Declarative Comments Format
 
 `oasgo` uses declarative comments to describe HTTP operations next to the Go handler that implements them. A supported operation block starts with `oasgo:operation` inside a Go doc comment attached to a function or method.
+
+No end marker is needed. The operation block ends when the attached Go doc comment ends.
 
 The comment body is a small YAML-like mapping. The required fields are:
 
@@ -169,7 +178,7 @@ paths:
 
 ## Development Notes
 
-This repository is currently a starting point. As implementation is added, keep parser logic, OpenAPI model construction, and YAML rendering separated behind the CLI.
+This repository is currently a starting point. Parser logic, OpenAPI model construction, validation, and YAML rendering are kept separated behind the CLI.
 
 See [docs/blueprint.md](docs/blueprint.md) for the implementation blueprint, package plan, milestone order, and testing strategy.
 See [docs/declarative-comments.md](docs/declarative-comments.md) for the first supported source comment format.
@@ -179,8 +188,9 @@ Recommended implementation building blocks:
 - `go/parser` and `go/ast` for syntax scanning.
 - `go/types` for type resolution where needed.
 - A structured OpenAPI model before YAML serialization.
+- Validation before YAML serialization.
 - Fixture-based tests for generated YAML output.
 
 ## Status
 
-Early project setup.
+Early implementation. The CLI, recursive scanner, `oasgo:operation` parser, OpenAPI model, subset validator, renderer, build commands, and tests exist. The next major work is mapping Go structs into real `components.schemas` instead of placeholder object schemas.
